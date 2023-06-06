@@ -1,5 +1,31 @@
 const { JSDOM } = require("jsdom");
 
+async function crawlPage(currentUrl) {
+  console.log(`actively crawling ${currentUrl}`);
+
+  try {
+    const resp = await fetch(currentUrl);
+
+    if (resp.status > 399) {
+      console.log(
+        `error in fetch with status code: ${resp.status} on page: ${currentUrl}`
+      );
+      return;
+    }
+
+    const contentType = resp.headers.get("content-type");
+    if (!contentType.includes("text/html")) {
+      console.log(
+        `non html response, content type ${resp.status} on page: ${currentUrl}`
+      );
+      return;
+    }
+    console.log(await resp.text());
+  } catch (err) {
+    console.log(`error in fetch: ${err.message}, on page ${currentUrl}`);
+  }
+}
+
 function getUrlsFromHTML(htmlBody, baseUrl) {
   const URLs = [];
   const dom = new JSDOM(htmlBody);
@@ -11,7 +37,7 @@ function getUrlsFromHTML(htmlBody, baseUrl) {
         const urlObj = new URL(`${baseUrl}${_link.href}`);
         URLs.push(urlObj.href);
       } catch (err) {
-        console.log(`invalid url rel search: ${err.m3ssage}`);
+        console.log(`invalid url rel search: ${err.message}`);
       }
     } else {
       // absolute
@@ -19,7 +45,7 @@ function getUrlsFromHTML(htmlBody, baseUrl) {
         const urlObj = new URL(`${_link.href}`);
         URLs.push(urlObj.href);
       } catch (err) {
-        console.log(`invalid url abs search: ${err.m3ssage}`);
+        console.log(`invalid url abs search: ${err.message}`);
       }
     }
   }
@@ -37,4 +63,5 @@ function normalizeUrl(urlString) {
 module.exports = {
   normalizeUrl,
   getUrlsFromHTML,
+  crawlPage,
 };
